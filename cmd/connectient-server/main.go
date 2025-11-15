@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	_ "github.com/lib/pq"
 	"github.com/mentalcaries/connectient-backend/internal/routes"
 )
 
