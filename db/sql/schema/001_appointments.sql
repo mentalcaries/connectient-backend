@@ -14,9 +14,9 @@ CREATE TABLE appointments (
     created_by UUID,
     scheduled_by UUID,
     is_cancelled BOOLEAN DEFAULT FALSE,
-    requested_time TEXT DEFAULT ''::TEXT,
+    requested_time TEXT DEFAULT ''::TEXT NOT NULL,
     scheduled_time time without time zone,
-    practice_id UUID,
+    practice_id UUID NOT NULL,
     created_at timestamp with time zone,
     modified_at timestamp with time zone
 );

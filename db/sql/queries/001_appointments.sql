@@ -6,6 +6,7 @@ VALUES (
     sqlc.arg(first_name), 
     sqlc.arg(last_name), 
     sqlc.arg(email), 
+    sqlc.arg(mobile_phone),
     sqlc.arg(requested_date), 
     sqlc.arg(is_emergency), 
     sqlc.arg(description), 
@@ -18,7 +19,6 @@ VALUES (
     sqlc.arg(requested_time), 
     sqlc.arg(scheduled_time), 
     sqlc.arg(practice_id), 
-    NOW(),
-    sqlc.arg(mobile_phone)
+    NOW()
 )
 RETURNING *;

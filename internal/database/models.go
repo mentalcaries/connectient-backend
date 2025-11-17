@@ -26,9 +26,9 @@ type Appointment struct {
 	CreatedBy       uuid.NullUUID
 	ScheduledBy     uuid.NullUUID
 	IsCancelled     sql.NullBool
-	RequestedTime   sql.NullString
+	RequestedTime   string
 	ScheduledTime   sql.NullTime
-	PracticeID      uuid.NullUUID
+	PracticeID      uuid.UUID
 	CreatedAt       sql.NullTime
 	ModifiedAt      sql.NullTime
 }

@@ -21,7 +21,7 @@ VALUES (
     $1, 
     $2, 
     $3, 
-    $4, 
+    $4,
     $5, 
     $6, 
     $7, 
@@ -33,8 +33,8 @@ VALUES (
     $13, 
     $14, 
     $15, 
-    NOW(),
-    $16
+    $16, 
+    NOW()
 )
 RETURNING id, first_name, last_name, email, mobile_phone, requested_date, is_emergency, description, appointment_type, is_scheduled, scheduled_date, created_by, scheduled_by, is_cancelled, requested_time, scheduled_time, practice_id, created_at, modified_at
 `
@@ -43,19 +43,19 @@ type CreateAppointmentParams struct {
 	FirstName       string
 	LastName        string
 	Email           string
-	RequestedDate   string
-	IsEmergency     time.Time
-	Description     sql.NullBool
+	MobilePhone     string
+	RequestedDate   time.Time
+	IsEmergency     sql.NullBool
+	Description     sql.NullString
 	AppointmentType sql.NullString
-	IsScheduled     sql.NullString
-	ScheduledDate   sql.NullBool
-	CreatedBy       sql.NullTime
+	IsScheduled     sql.NullBool
+	ScheduledDate   sql.NullTime
+	CreatedBy       uuid.NullUUID
 	ScheduledBy     uuid.NullUUID
-	IsCancelled     uuid.NullUUID
-	RequestedTime   sql.NullBool
-	ScheduledTime   sql.NullString
-	PracticeID      sql.NullTime
-	MobilePhone     sql.NullTime
+	IsCancelled     sql.NullBool
+	RequestedTime   string
+	ScheduledTime   sql.NullTime
+	PracticeID      uuid.UUID
 }
 
 func (q *Queries) CreateAppointment(ctx context.Context, arg CreateAppointmentParams) (Appointment, error) {
@@ -63,6 +63,7 @@ func (q *Queries) CreateAppointment(ctx context.Context, arg CreateAppointmentPa
 		arg.FirstName,
 		arg.LastName,
 		arg.Email,
+		arg.MobilePhone,
 		arg.RequestedDate,
 		arg.IsEmergency,
 		arg.Description,
@@ -75,7 +76,6 @@ func (q *Queries) CreateAppointment(ctx context.Context, arg CreateAppointmentPa
 		arg.RequestedTime,
 		arg.ScheduledTime,
 		arg.PracticeID,
-		arg.MobilePhone,
 	)
 	var i Appointment
 	err := row.Scan(

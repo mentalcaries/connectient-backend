@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"database/sql"
@@ -6,26 +6,30 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/joho/godotenv"
-	_ "github.com/lib/pq"
 	"github.com/mentalcaries/connectient-backend/internal/database"
-	"github.com/mentalcaries/connectient-backend/internal/routes"
 )
 
-type apiConfig struct {
-	platform  string
-	jwtSecret string
-	db        *database.Queries
+type Server struct {
+	port      int
+	Platform  string
+	JWTSecret string
+	DB        *database.Queries
 }
 
-func main() {
-	const port = 4000
+func NewServer() *http.Server {
 
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
 	if dbURL == "" {
 		log.Fatal("DB_URL must be set")
+	}
+
+	port, _ := strconv.Atoi(os.Getenv("PORT"))
+	if port == 0  {
+		log.Fatal("PORT value must be set")
 	}
 
 	dbConn, err := sql.Open("postgres", dbURL)
@@ -34,17 +38,17 @@ func main() {
 	}
 
 	dbQueries := database.New(dbConn)
-	apiCfg := apiConfig{
-		db: dbQueries,
+	apiCfg := Server{
+		DB:   dbQueries,
+		port: port,
 	}
 
-	router := routes.NewRouter()
+	router := NewRouter(&apiCfg)
 	addr := fmt.Sprintf(":%v", port)
 	server := http.Server{
 		Addr:    addr,
 		Handler: router,
 	}
-	log.Printf("Server listening on port %v\n", port)
-	log.Fatal(server.ListenAndServe())
 
+    return &server
 }
