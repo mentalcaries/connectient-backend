@@ -1,13 +1,14 @@
 package server
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/joho/godotenv"
 	"github.com/mentalcaries/connectient-backend/internal/database"
 )
@@ -16,7 +17,7 @@ type Server struct {
 	port      int
 	Platform  string
 	JWTSecret string
-	DB        *database.Queries
+	DB        *db.Queries
 }
 
 func NewServer() *http.Server {
@@ -32,12 +33,12 @@ func NewServer() *http.Server {
 		log.Fatal("PORT value must be set")
 	}
 
-	dbConn, err := sql.Open("postgres", dbURL)
+	dbConn, err := pgx.Connect(context.Background(), dbURL)
 	if err != nil {
 		log.Fatalf("Error connecting to database: %v", err)
 	}
 
-	dbQueries := database.New(dbConn)
+	dbQueries := db.New(dbConn)
 	apiCfg := Server{
 		DB:   dbQueries,
 		port: port,

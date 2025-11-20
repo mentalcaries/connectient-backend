@@ -1,0 +1,124 @@
+package server
+
+import (
+	"encoding/json"
+	"net/http"
+	"time"
+
+	"github.com/google/uuid"
+	db "github.com/mentalcaries/connectient-backend/internal/database"
+)
+
+type Appointment struct {
+	ID              uuid.UUID  `json:"id"`
+	CreatedAt       time.Time  `json:"created_at"`
+	ModifiedAt      time.Time  `json:"modified_at"`
+	Email           string     `json:"email"`
+	FirstName       string     `json:"first_name"`
+	LastName        string     `json:"last_name"`
+	MobilePhone     string     `json:"mobile_phone"`
+	RequestedDate   time.Time  `json:"requested_date"`
+	IsEmergency     bool       `json:"is_emergency"`
+	Description     string     `json:"description,omitempty"`
+	AppointmentType string     `json:"appointment_type"`
+	IsScheduled     bool       `json:"is_scheduled"`
+	ScheduledDate   *time.Time `json:"scheduled_date,omitempty"`
+	CreatedBy       *uuid.UUID `json:"created_by,omitempty"`
+	ScheduledBy     *uuid.UUID `json:"scheduled_by,omitempty"`
+	IsCancelled     bool       `json:"is_cancelled"`
+	RequestedTime   string     `json:"requested_time"`
+	ScheduledTime   *string    `json:"scheduled_time,omitempty"`
+	PracticeID      uuid.UUID  `json:"practice_id"`
+}
+
+type AppointmentRequest struct {
+	Email           string    `json:"email"`
+	FirstName       string    `json:"first_name"`
+	LastName        string    `json:"last_name"`
+	MobilePhone     string    `json:"mobile_phone"`
+	RequestedDate   time.Time `json:"requested_date"`
+	IsEmergency     bool      `json:"is_emergency"`
+	Description     *string   `json:"description"`
+	AppointmentType *string   `json:"appointment_type"`
+	RequestedTime   string    `json:"requested_time"`
+	PracticeID      uuid.UUID `json:"practice_id"`
+}
+
+func (s *Server) handlerAppointmentsGetAll(w http.ResponseWriter, r *http.Request) {
+	dbAppts, err := s.DB.GetAppointments(r.Context())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Could not get Appointments", err)
+		return
+	}
+	appointments := []Appointment{}
+
+	for _, dbAppt := range dbAppts {
+		appointments = append(appointments, Appointment{
+			ID:              dbAppt.ID,
+			CreatedAt:       dbAppt.CreatedAt,
+			ModifiedAt:      dbAppt.ModifiedAt,
+			Email:           dbAppt.Email,
+			FirstName:       dbAppt.FirstName,
+			LastName:        dbAppt.LastName,
+			MobilePhone:     dbAppt.MobilePhone,
+			RequestedDate:   dbAppt.RequestedDate,
+			IsEmergency:     dbAppt.IsEmergency,
+			Description:     *dbAppt.Description,
+			AppointmentType: *dbAppt.AppointmentType,
+			IsScheduled:     dbAppt.IsScheduled,
+			ScheduledDate:   dbAppt.ScheduledDate,
+			CreatedBy:       dbAppt.CreatedBy,
+			ScheduledBy:     dbAppt.ScheduledBy,
+			IsCancelled:     dbAppt.IsCancelled,
+			RequestedTime:   dbAppt.RequestedTime,
+			ScheduledTime:   dbAppt.ScheduledTime,
+			PracticeID:      dbAppt.PracticeID,
+		})
+	}
+
+	respondWithJSON(w, http.StatusOK, appointments)
+}
+
+func (s *Server) handlerAppointmentsCreate(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	params := AppointmentRequest{}
+
+	err := decoder.Decode(&params)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Invalid request", err)
+		return
+	}
+
+	appointment, err := s.DB.CreateAppointment(r.Context(), db.CreateAppointmentParams{
+		FirstName:       params.FirstName,
+		LastName:        params.LastName,
+		MobilePhone:     params.MobilePhone,
+		Email:           params.Email,
+		RequestedDate:   params.RequestedDate,
+		RequestedTime:   params.RequestedTime,
+		AppointmentType: params.AppointmentType,
+		Description:     params.Description,
+		IsEmergency:     params.IsEmergency,
+		PracticeID:      params.PracticeID,
+	})
+
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Could not save to database", err)
+		return
+	}
+	respondWithJSON(w, http.StatusCreated, Appointment{
+		ID:              appointment.ID,
+		CreatedAt:       appointment.CreatedAt,
+		ModifiedAt:      appointment.ModifiedAt,
+		FirstName:       appointment.FirstName,
+		LastName:        appointment.LastName,
+		MobilePhone:     appointment.MobilePhone,
+		Email:           appointment.Email,
+		RequestedDate:   appointment.RequestedDate,
+		RequestedTime:   appointment.RequestedTime,
+		AppointmentType: *appointment.AppointmentType,
+		Description:     *appointment.Description,
+		IsEmergency:     appointment.IsEmergency,
+		PracticeID:      appointment.PracticeID,
+	})
+}

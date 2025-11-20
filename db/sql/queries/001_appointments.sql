@@ -1,7 +1,11 @@
+-- name: GetAppointments :many
+
+SELECT * FROM appointments;
+
 -- name: CreateAppointment :one
 INSERT INTO appointments (id, created_at, first_name, last_name, email, mobile_phone, requested_date, is_emergency, description, appointment_type, is_scheduled, scheduled_date, created_by, scheduled_by, is_cancelled, requested_time, scheduled_time, practice_id, modified_at)
 VALUES (
-    gen_random_uuid, 
+    gen_random_uuid(), 
     NOW(),
     sqlc.arg(first_name), 
     sqlc.arg(last_name), 

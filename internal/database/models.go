@@ -2,10 +2,9 @@
 // versions:
 //   sqlc v1.29.0
 
-package database
+package db
 
 import (
-	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -18,17 +17,17 @@ type Appointment struct {
 	Email           string
 	MobilePhone     string
 	RequestedDate   time.Time
-	IsEmergency     sql.NullBool
-	Description     sql.NullString
-	AppointmentType sql.NullString
-	IsScheduled     sql.NullBool
-	ScheduledDate   sql.NullTime
-	CreatedBy       uuid.NullUUID
-	ScheduledBy     uuid.NullUUID
-	IsCancelled     sql.NullBool
 	RequestedTime   string
-	ScheduledTime   sql.NullTime
+	IsEmergency     bool
+	Description     *string
+	AppointmentType *string
+	IsScheduled     bool
+	ScheduledDate   *time.Time
+	ScheduledTime   *string
 	PracticeID      uuid.UUID
-	CreatedAt       sql.NullTime
-	ModifiedAt      sql.NullTime
+	CreatedBy       *uuid.UUID
+	ScheduledBy     *uuid.UUID
+	IsCancelled     bool
+	CreatedAt       time.Time
+	ModifiedAt      time.Time
 }

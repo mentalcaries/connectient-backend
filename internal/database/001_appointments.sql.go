@@ -3,11 +3,10 @@
 //   sqlc v1.29.0
 // source: 001_appointments.sql
 
-package database
+package db
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -16,7 +15,7 @@ import (
 const createAppointment = `-- name: CreateAppointment :one
 INSERT INTO appointments (id, created_at, first_name, last_name, email, mobile_phone, requested_date, is_emergency, description, appointment_type, is_scheduled, scheduled_date, created_by, scheduled_by, is_cancelled, requested_time, scheduled_time, practice_id, modified_at)
 VALUES (
-    gen_random_uuid, 
+    gen_random_uuid(), 
     NOW(),
     $1, 
     $2, 
@@ -36,7 +35,7 @@ VALUES (
     $16, 
     NOW()
 )
-RETURNING id, first_name, last_name, email, mobile_phone, requested_date, is_emergency, description, appointment_type, is_scheduled, scheduled_date, created_by, scheduled_by, is_cancelled, requested_time, scheduled_time, practice_id, created_at, modified_at
+RETURNING id, first_name, last_name, email, mobile_phone, requested_date, requested_time, is_emergency, description, appointment_type, is_scheduled, scheduled_date, scheduled_time, practice_id, created_by, scheduled_by, is_cancelled, created_at, modified_at
 `
 
 type CreateAppointmentParams struct {
@@ -45,21 +44,21 @@ type CreateAppointmentParams struct {
 	Email           string
 	MobilePhone     string
 	RequestedDate   time.Time
-	IsEmergency     sql.NullBool
-	Description     sql.NullString
-	AppointmentType sql.NullString
-	IsScheduled     sql.NullBool
-	ScheduledDate   sql.NullTime
-	CreatedBy       uuid.NullUUID
-	ScheduledBy     uuid.NullUUID
-	IsCancelled     sql.NullBool
+	IsEmergency     bool
+	Description     *string
+	AppointmentType *string
+	IsScheduled     bool
+	ScheduledDate   *time.Time
+	CreatedBy       *uuid.UUID
+	ScheduledBy     *uuid.UUID
+	IsCancelled     bool
 	RequestedTime   string
-	ScheduledTime   sql.NullTime
+	ScheduledTime   *string
 	PracticeID      uuid.UUID
 }
 
 func (q *Queries) CreateAppointment(ctx context.Context, arg CreateAppointmentParams) (Appointment, error) {
-	row := q.db.QueryRowContext(ctx, createAppointment,
+	row := q.db.QueryRow(ctx, createAppointment,
 		arg.FirstName,
 		arg.LastName,
 		arg.Email,
@@ -85,19 +84,64 @@ func (q *Queries) CreateAppointment(ctx context.Context, arg CreateAppointmentPa
 		&i.Email,
 		&i.MobilePhone,
 		&i.RequestedDate,
+		&i.RequestedTime,
 		&i.IsEmergency,
 		&i.Description,
 		&i.AppointmentType,
 		&i.IsScheduled,
 		&i.ScheduledDate,
+		&i.ScheduledTime,
+		&i.PracticeID,
 		&i.CreatedBy,
 		&i.ScheduledBy,
 		&i.IsCancelled,
-		&i.RequestedTime,
-		&i.ScheduledTime,
-		&i.PracticeID,
 		&i.CreatedAt,
 		&i.ModifiedAt,
 	)
 	return i, err
+}
+
+const getAppointments = `-- name: GetAppointments :many
+
+SELECT id, first_name, last_name, email, mobile_phone, requested_date, requested_time, is_emergency, description, appointment_type, is_scheduled, scheduled_date, scheduled_time, practice_id, created_by, scheduled_by, is_cancelled, created_at, modified_at FROM appointments
+`
+
+func (q *Queries) GetAppointments(ctx context.Context) ([]Appointment, error) {
+	rows, err := q.db.Query(ctx, getAppointments)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Appointment
+	for rows.Next() {
+		var i Appointment
+		if err := rows.Scan(
+			&i.ID,
+			&i.FirstName,
+			&i.LastName,
+			&i.Email,
+			&i.MobilePhone,
+			&i.RequestedDate,
+			&i.RequestedTime,
+			&i.IsEmergency,
+			&i.Description,
+			&i.AppointmentType,
+			&i.IsScheduled,
+			&i.ScheduledDate,
+			&i.ScheduledTime,
+			&i.PracticeID,
+			&i.CreatedBy,
+			&i.ScheduledBy,
+			&i.IsCancelled,
+			&i.CreatedAt,
+			&i.ModifiedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
