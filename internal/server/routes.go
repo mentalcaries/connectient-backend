@@ -13,6 +13,7 @@ func NewRouter(s *Server) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", handleReadiness)
 	mux.HandleFunc("GET /appointments", s.handlerAppointmentsGetAll)
+	mux.HandleFunc("GET /appointments/{id}", s.handlerGetAppointmentById)
 	mux.HandleFunc("POST /appointments", s.handlerAppointmentsCreate)
 	return mux
 }

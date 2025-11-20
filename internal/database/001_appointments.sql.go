@@ -35,7 +35,7 @@ VALUES (
     $16, 
     NOW()
 )
-RETURNING id, first_name, last_name, email, mobile_phone, requested_date, requested_time, is_emergency, description, appointment_type, is_scheduled, scheduled_date, scheduled_time, practice_id, created_by, scheduled_by, is_cancelled, created_at, modified_at
+RETURNING id, created_at, first_name, last_name, email, mobile_phone, requested_date, is_emergency, description, appointment_type, requested_time, practice_id, modified_at
 `
 
 type CreateAppointmentParams struct {
@@ -57,7 +57,23 @@ type CreateAppointmentParams struct {
 	PracticeID      uuid.UUID
 }
 
-func (q *Queries) CreateAppointment(ctx context.Context, arg CreateAppointmentParams) (Appointment, error) {
+type CreateAppointmentRow struct {
+	ID              uuid.UUID
+	CreatedAt       time.Time
+	FirstName       string
+	LastName        string
+	Email           string
+	MobilePhone     string
+	RequestedDate   time.Time
+	IsEmergency     bool
+	Description     *string
+	AppointmentType *string
+	RequestedTime   string
+	PracticeID      uuid.UUID
+	ModifiedAt      time.Time
+}
+
+func (q *Queries) CreateAppointment(ctx context.Context, arg CreateAppointmentParams) (CreateAppointmentRow, error) {
 	row := q.db.QueryRow(ctx, createAppointment,
 		arg.FirstName,
 		arg.LastName,
@@ -76,6 +92,31 @@ func (q *Queries) CreateAppointment(ctx context.Context, arg CreateAppointmentPa
 		arg.ScheduledTime,
 		arg.PracticeID,
 	)
+	var i CreateAppointmentRow
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.FirstName,
+		&i.LastName,
+		&i.Email,
+		&i.MobilePhone,
+		&i.RequestedDate,
+		&i.IsEmergency,
+		&i.Description,
+		&i.AppointmentType,
+		&i.RequestedTime,
+		&i.PracticeID,
+		&i.ModifiedAt,
+	)
+	return i, err
+}
+
+const getAppointmentById = `-- name: GetAppointmentById :one
+SELECT id, first_name, last_name, email, mobile_phone, requested_date, requested_time, is_emergency, description, appointment_type, is_scheduled, scheduled_date, scheduled_time, practice_id, created_by, scheduled_by, is_cancelled, created_at, modified_at FROM appointments WHERE id = $1
+`
+
+func (q *Queries) GetAppointmentById(ctx context.Context, id uuid.UUID) (Appointment, error) {
+	row := q.db.QueryRow(ctx, getAppointmentById, id)
 	var i Appointment
 	err := row.Scan(
 		&i.ID,

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -77,6 +78,46 @@ func (s *Server) handlerAppointmentsGetAll(w http.ResponseWriter, r *http.Reques
 	}
 
 	respondWithJSON(w, http.StatusOK, appointments)
+}
+
+func (s *Server) handlerGetAppointmentById(w http.ResponseWriter, r *http.Request) {
+	idParam := r.PathValue("id")
+	if idParam == "" {
+		respondWithError(w, http.StatusBadRequest, "No ID submitted", nil)
+		return
+	}
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid ID", err)
+		return
+	}
+
+	dbAppt, err := s.DB.GetAppointmentById(r.Context(), id)
+	if err != nil || err == sql.ErrNoRows {
+		respondWithError(w, http.StatusNotFound, "No appointments found", err)
+		return
+	}
+	respondWithJSON(w, http.StatusOK, Appointment{
+		ID:              dbAppt.ID,
+		CreatedAt:       dbAppt.CreatedAt,
+		ModifiedAt:      dbAppt.ModifiedAt,
+		Email:           dbAppt.Email,
+		FirstName:       dbAppt.FirstName,
+		LastName:        dbAppt.LastName,
+		MobilePhone:     dbAppt.MobilePhone,
+		RequestedDate:   dbAppt.RequestedDate,
+		IsEmergency:     dbAppt.IsEmergency,
+		Description:     *dbAppt.Description,
+		AppointmentType: *dbAppt.AppointmentType,
+		IsScheduled:     dbAppt.IsScheduled,
+		ScheduledDate:   dbAppt.ScheduledDate,
+		CreatedBy:       dbAppt.CreatedBy,
+		ScheduledBy:     dbAppt.ScheduledBy,
+		IsCancelled:     dbAppt.IsCancelled,
+		RequestedTime:   dbAppt.RequestedTime,
+		ScheduledTime:   dbAppt.ScheduledTime,
+		PracticeID:      dbAppt.PracticeID,
+	})
 }
 
 func (s *Server) handlerAppointmentsCreate(w http.ResponseWriter, r *http.Request) {

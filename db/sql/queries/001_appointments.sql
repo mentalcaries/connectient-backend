@@ -25,4 +25,7 @@ VALUES (
     sqlc.arg(practice_id), 
     NOW()
 )
-RETURNING *;
+RETURNING id, created_at, first_name, last_name, email, mobile_phone, requested_date, is_emergency, description, appointment_type, requested_time, practice_id, modified_at;
+
+-- name: GetAppointmentById :one
+SELECT * FROM appointments WHERE id = $1;
