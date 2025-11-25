@@ -15,6 +15,9 @@ func NewRouter(s *Server) http.Handler {
 	mux.HandleFunc("GET /appointments", s.handlerAppointmentsGetAll)
 	mux.HandleFunc("GET /appointments/{id}", s.handlerGetAppointmentById)
 	mux.HandleFunc("POST /appointments", s.handlerAppointmentsCreate)
+	mux.HandleFunc("PATCH /appointments/{id}", s.handlerAppointmentsUpdate)
+	mux.HandleFunc("DELETE /appointments/{id}", s.handlerAppointmentsDelete)
+
 	return mux
 }
 

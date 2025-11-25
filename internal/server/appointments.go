@@ -3,6 +3,8 @@ package server
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -24,15 +26,15 @@ type Appointment struct {
 	AppointmentType string     `json:"appointment_type"`
 	IsScheduled     bool       `json:"is_scheduled"`
 	ScheduledDate   *time.Time `json:"scheduled_date,omitempty"`
+	ScheduledTime   *string    `json:"scheduled_time,omitempty"`
 	CreatedBy       *uuid.UUID `json:"created_by,omitempty"`
 	ScheduledBy     *uuid.UUID `json:"scheduled_by,omitempty"`
 	IsCancelled     bool       `json:"is_cancelled"`
 	RequestedTime   string     `json:"requested_time"`
-	ScheduledTime   *string    `json:"scheduled_time,omitempty"`
 	PracticeID      uuid.UUID  `json:"practice_id"`
 }
 
-type AppointmentRequest struct {
+type NewAppointmentRequest struct {
 	Email           string    `json:"email"`
 	FirstName       string    `json:"first_name"`
 	LastName        string    `json:"last_name"`
@@ -43,6 +45,26 @@ type AppointmentRequest struct {
 	AppointmentType *string   `json:"appointment_type"`
 	RequestedTime   string    `json:"requested_time"`
 	PracticeID      uuid.UUID `json:"practice_id"`
+}
+
+type UpdateAppointmentRequest struct {
+	ID            uuid.UUID  `json:"id"`
+	ScheduledDate *time.Time `json:"scheduled_date,omitempty"`
+	ScheduledTime *string    `json:"scheduled_time,omitempty"`
+	IsScheduled   bool       `json:"is_scheduled,omitempty"`
+	IsCancelled   bool       `json:"is_cancelled,omitempty"`
+}
+
+func parseId(r *http.Request, param string) (uuid.UUID, error) {
+	requestParam := r.PathValue(param)
+	if requestParam == "" {
+		return uuid.UUID{}, errors.New("missing or invalid ID")
+	}
+	id, err := uuid.Parse(requestParam)
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+	return id, nil
 }
 
 func (s *Server) handlerAppointmentsGetAll(w http.ResponseWriter, r *http.Request) {
@@ -76,19 +98,13 @@ func (s *Server) handlerAppointmentsGetAll(w http.ResponseWriter, r *http.Reques
 			PracticeID:      dbAppt.PracticeID,
 		})
 	}
-
 	respondWithJSON(w, http.StatusOK, appointments)
 }
 
 func (s *Server) handlerGetAppointmentById(w http.ResponseWriter, r *http.Request) {
-	idParam := r.PathValue("id")
-	if idParam == "" {
-		respondWithError(w, http.StatusBadRequest, "No ID submitted", nil)
-		return
-	}
-	id, err := uuid.Parse(idParam)
+	id, err := parseId(r, "id")
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid ID", err)
+		respondWithError(w, http.StatusBadRequest, "Invalid or missing ID", err)
 		return
 	}
 
@@ -122,11 +138,11 @@ func (s *Server) handlerGetAppointmentById(w http.ResponseWriter, r *http.Reques
 
 func (s *Server) handlerAppointmentsCreate(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
-	params := AppointmentRequest{}
+	params := NewAppointmentRequest{}
 
 	err := decoder.Decode(&params)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Invalid request", err)
+		respondWithError(w, http.StatusBadRequest, "Invalid request", err)
 		return
 	}
 
@@ -162,4 +178,67 @@ func (s *Server) handlerAppointmentsCreate(w http.ResponseWriter, r *http.Reques
 		IsEmergency:     appointment.IsEmergency,
 		PracticeID:      appointment.PracticeID,
 	})
+}
+
+func (s *Server) handlerAppointmentsUpdate(w http.ResponseWriter, r *http.Request) {
+	id, err := parseId(r, "id")
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid or missing ID", err)
+		return
+	}
+	decoder := json.NewDecoder(r.Body)
+	params := UpdateAppointmentRequest{}
+	err = decoder.Decode(&params)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Could not decode request", err)
+		return
+	}
+	updatedAppt, err := s.DB.UpdateAppointment(r.Context(), db.UpdateAppointmentParams{
+		ID:            id,
+		ScheduledDate: params.ScheduledDate,
+		ScheduledTime: params.ScheduledTime,
+		IsScheduled:   &params.IsScheduled,
+		IsCancelled:   &params.IsCancelled,
+	})
+
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Could not update appointment", err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, Appointment{
+		ID:              updatedAppt.ID,
+		CreatedAt:       updatedAppt.CreatedAt,
+		ModifiedAt:      updatedAppt.ModifiedAt,
+		FirstName:       updatedAppt.FirstName,
+		LastName:        updatedAppt.LastName,
+		MobilePhone:     updatedAppt.MobilePhone,
+		Email:           updatedAppt.Email,
+		RequestedDate:   updatedAppt.RequestedDate,
+		RequestedTime:   updatedAppt.RequestedTime,
+		AppointmentType: *updatedAppt.AppointmentType,
+		Description:     *updatedAppt.Description,
+		IsEmergency:     updatedAppt.IsEmergency,
+		PracticeID:      updatedAppt.PracticeID,
+		IsScheduled:     updatedAppt.IsScheduled,
+		IsCancelled:     updatedAppt.IsCancelled,
+		ScheduledDate:   updatedAppt.ScheduledDate,
+		ScheduledTime:   updatedAppt.ScheduledTime,
+	})
+}
+
+func (s *Server) handlerAppointmentsDelete(w http.ResponseWriter, r *http.Request) {
+	id, err := parseId(r, "id")
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid or missing ID", err)
+		return
+	}
+
+	deletedAppt, err := s.DB.DeleteAppointment(r.Context(), id)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Could not delete appointment", err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, fmt.Sprintf("Successfully deleted appointment with id: %v", deletedAppt))
 }

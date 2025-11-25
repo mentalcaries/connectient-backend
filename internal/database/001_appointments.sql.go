@@ -111,6 +111,18 @@ func (q *Queries) CreateAppointment(ctx context.Context, arg CreateAppointmentPa
 	return i, err
 }
 
+const deleteAppointment = `-- name: DeleteAppointment :one
+DELETE FROM appointments
+WHERE id = $1
+RETURNING id
+`
+
+func (q *Queries) DeleteAppointment(ctx context.Context, id uuid.UUID) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, deleteAppointment, id)
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getAppointmentById = `-- name: GetAppointmentById :one
 SELECT id, first_name, last_name, email, mobile_phone, requested_date, requested_time, is_emergency, description, appointment_type, is_scheduled, scheduled_date, scheduled_time, practice_id, created_by, scheduled_by, is_cancelled, created_at, modified_at FROM appointments WHERE id = $1
 `
@@ -185,4 +197,56 @@ func (q *Queries) GetAppointments(ctx context.Context) ([]Appointment, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateAppointment = `-- name: UpdateAppointment :one
+UPDATE appointments
+SET scheduled_date = COALESCE($1, scheduled_date),
+    scheduled_time = COALESCE($2, scheduled_time),
+    is_scheduled = COALESCE($3, is_scheduled),
+    is_cancelled = COALESCE($4, is_cancelled),
+    modified_at = NOW()
+WHERE id = $5
+RETURNING id, first_name, last_name, email, mobile_phone, requested_date, requested_time, is_emergency, description, appointment_type, is_scheduled, scheduled_date, scheduled_time, practice_id, created_by, scheduled_by, is_cancelled, created_at, modified_at
+`
+
+type UpdateAppointmentParams struct {
+	ScheduledDate *time.Time
+	ScheduledTime *string
+	IsScheduled   *bool
+	IsCancelled   *bool
+	ID            uuid.UUID
+}
+
+func (q *Queries) UpdateAppointment(ctx context.Context, arg UpdateAppointmentParams) (Appointment, error) {
+	row := q.db.QueryRow(ctx, updateAppointment,
+		arg.ScheduledDate,
+		arg.ScheduledTime,
+		arg.IsScheduled,
+		arg.IsCancelled,
+		arg.ID,
+	)
+	var i Appointment
+	err := row.Scan(
+		&i.ID,
+		&i.FirstName,
+		&i.LastName,
+		&i.Email,
+		&i.MobilePhone,
+		&i.RequestedDate,
+		&i.RequestedTime,
+		&i.IsEmergency,
+		&i.Description,
+		&i.AppointmentType,
+		&i.IsScheduled,
+		&i.ScheduledDate,
+		&i.ScheduledTime,
+		&i.PracticeID,
+		&i.CreatedBy,
+		&i.ScheduledBy,
+		&i.IsCancelled,
+		&i.CreatedAt,
+		&i.ModifiedAt,
+	)
+	return i, err
 }

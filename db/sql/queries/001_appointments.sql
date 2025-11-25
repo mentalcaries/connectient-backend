@@ -29,3 +29,18 @@ RETURNING id, created_at, first_name, last_name, email, mobile_phone, requested_
 
 -- name: GetAppointmentById :one
 SELECT * FROM appointments WHERE id = $1;
+
+-- name: UpdateAppointment :one
+UPDATE appointments
+SET scheduled_date = COALESCE(sqlc.narg(scheduled_date), scheduled_date),
+    scheduled_time = COALESCE(sqlc.narg(scheduled_time), scheduled_time),
+    is_scheduled = COALESCE(sqlc.narg(is_scheduled), is_scheduled),
+    is_cancelled = COALESCE(sqlc.narg(is_cancelled), is_cancelled),
+    modified_at = NOW()
+WHERE id = sqlc.arg(id)
+RETURNING *;
+
+-- name: DeleteAppointment :one
+DELETE FROM appointments
+WHERE id = $1
+RETURNING id;
