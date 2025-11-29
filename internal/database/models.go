@@ -31,3 +31,20 @@ type Appointment struct {
 	CreatedAt       time.Time
 	ModifiedAt      time.Time
 }
+
+type Practice struct {
+	ID            uuid.UUID
+	CreatedAt     time.Time
+	ModifiedAt    time.Time
+	Name          string
+	City          string
+	Phone         string
+	Email         string
+	Owner         *uuid.UUID
+	PracticeCode  *string
+	Logo          *string
+	StreetAddress *string
+	Facebook      *string
+	Instagram     *string
+	Website       *string
+}

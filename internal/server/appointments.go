@@ -3,7 +3,6 @@ package server
 import (
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -53,18 +52,6 @@ type UpdateAppointmentRequest struct {
 	ScheduledTime *string    `json:"scheduled_time,omitempty"`
 	IsScheduled   bool       `json:"is_scheduled,omitempty"`
 	IsCancelled   bool       `json:"is_cancelled,omitempty"`
-}
-
-func parseId(r *http.Request, param string) (uuid.UUID, error) {
-	requestParam := r.PathValue(param)
-	if requestParam == "" {
-		return uuid.UUID{}, errors.New("missing or invalid ID")
-	}
-	id, err := uuid.Parse(requestParam)
-	if err != nil {
-		return uuid.UUID{}, err
-	}
-	return id, nil
 }
 
 func (s *Server) handlerAppointmentsGetAll(w http.ResponseWriter, r *http.Request) {
