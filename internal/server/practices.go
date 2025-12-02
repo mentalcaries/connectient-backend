@@ -12,7 +12,7 @@ import (
 	db "github.com/mentalcaries/connectient-backend/internal/database"
 )
 
-type Practice struct {
+type PracticeResponse struct {
 	ID            uuid.UUID  `json:"id"`
 	CreatedAt     time.Time  `json:"created_at"`
 	ModifiedAt    time.Time  `json:"modified_at"`
@@ -21,7 +21,7 @@ type Practice struct {
 	Phone         string     `json:"phone"`
 	Email         string     `json:"email"`
 	Owner         *uuid.UUID `json:"owner,omitempty"`
-	PracticeCode  string     `json:"practice_code"`
+	PracticeCode  string    `json:"practice_code"`
 	Logo          string     `json:"logo,omitempty"`
 	StreetAddress string     `json:"street_address"`
 	Instagram     string     `json:"instagram,omitempty"`
@@ -31,17 +31,36 @@ type Practice struct {
 
 type PracticeRequest struct {
 	ID            *uuid.UUID `json:"id,omitempty"`
-	Name          string     `json:"name"`
-	City          string     `json:"city"`
-	Phone         string     `json:"phone"`
-	Email         string     `json:"email"`
+	Name          string     `json:"name,omitempty"`
+	City          string     `json:"city,omitempty"`
+	Phone         string     `json:"phone,omitempty"`
+	Email         string     `json:"email,omitempty"`
 	Owner         *uuid.UUID `json:"owner,omitempty"`
-	PracticeCode  string     `json:"practice_code"`
-	Logo          string     `json:"logo,omitempty"`
-	StreetAddress string     `json:"street_address"`
-	Instagram     string     `json:"instagram,omitempty"`
-	Facebook      string     `json:"facebook,omitempty"`
-	Website       string     `json:"website,omitempty"`
+	PracticeCode  *string    `json:"practice_code,omitempty"`
+	Logo          *string    `json:"logo,omitempty"`
+	StreetAddress *string    `json:"street_address,omitempty"`
+	Instagram     *string    `json:"instagram,omitempty"`
+	Facebook      *string    `json:"facebook,omitempty"`
+	Website       *string    `json:"website,omitempty"`
+}
+
+func newPracticeResponse(p db.Practice) PracticeResponse {
+	return PracticeResponse{
+		ID:            p.ID,
+		CreatedAt:     p.CreatedAt,
+		ModifiedAt:    p.ModifiedAt,
+		Name:          p.Name,
+		City:          p.City,
+		Phone:         p.Phone,
+		Email:         p.Email,
+		Owner:         p.Owner,
+		PracticeCode:  p.PracticeCode,
+		Logo:          *p.Logo,
+		StreetAddress: *p.StreetAddress,
+		Instagram:     *p.Instagram,
+		Facebook:      *p.Facebook,
+		Website:       *p.Website,
+	}
 }
 
 func (s *Server) handlerPracticeGetAll(w http.ResponseWriter, r *http.Request) {
@@ -51,9 +70,9 @@ func (s *Server) handlerPracticeGetAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	allPractices := []Practice{}
+	allPractices := []PracticeResponse{}
 	for _, practice := range practicesDb {
-		allPractices = append(allPractices, Practice{
+		allPractices = append(allPractices, PracticeResponse{
 			ID:            practice.ID,
 			CreatedAt:     practice.CreatedAt,
 			Name:          practice.Name,
@@ -61,7 +80,7 @@ func (s *Server) handlerPracticeGetAll(w http.ResponseWriter, r *http.Request) {
 			Phone:         practice.Phone,
 			Email:         practice.Email,
 			Owner:         practice.Owner,
-			PracticeCode:  *practice.PracticeCode,
+			PracticeCode:  practice.PracticeCode,
 			Logo:          *practice.Logo,
 			StreetAddress: *practice.StreetAddress,
 			Instagram:     *practice.Instagram,
@@ -89,12 +108,12 @@ func (s *Server) handlerPracticeCreate(w http.ResponseWriter, r *http.Request) {
 		City:          params.City,
 		Phone:         params.Phone,
 		Email:         params.Email,
-		PracticeCode:  &params.PracticeCode,
-		Logo:          &params.Logo,
-		StreetAddress: &params.StreetAddress,
-		Instagram:     &params.Instagram,
-		Facebook:      &params.Facebook,
-		Website:       &params.Website,
+		PracticeCode:  params.PracticeCode,
+		Logo:          params.Logo,
+		StreetAddress: params.StreetAddress,
+		Instagram:     params.Instagram,
+		Facebook:      params.Facebook,
+		Website:       params.Website,
 	})
 
 	if err != nil {
@@ -116,7 +135,7 @@ func (s *Server) handlerPracticeCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, newPractice)
+	respondWithJSON(w, http.StatusCreated, newPracticeResponse(newPractice))
 }
 
 func (s *Server) handlerPracticeUpdate(w http.ResponseWriter, r *http.Request) {
@@ -137,16 +156,16 @@ func (s *Server) handlerPracticeUpdate(w http.ResponseWriter, r *http.Request) {
 
 	updatedPractice, err := s.DB.UpdatePractice(r.Context(), db.UpdatePracticeParams{
 		ID:            pracId,
-		Name:          params.Name,
-		City:          params.City,
-		Phone:         params.Phone,
-		Email:         params.Email,
-		PracticeCode:  &params.PracticeCode,
-		Logo:          &params.Logo,
-		StreetAddress: &params.StreetAddress,
-		Instagram:     &params.Instagram,
-		Facebook:      &params.Facebook,
-		Website:       &params.Website,
+		Name:          &params.Name,
+		City:          &params.City,
+		Phone:         &params.Phone,
+		Email:         &params.Email,
+		PracticeCode:  params.PracticeCode,
+		Logo:          params.Logo,
+		StreetAddress: params.StreetAddress,
+		Instagram:     params.Instagram,
+		Facebook:      params.Facebook,
+		Website:       params.Website,
 	})
 
 	if err != nil {
@@ -158,13 +177,13 @@ func (s *Server) handlerPracticeUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, Practice{
+	respondWithJSON(w, http.StatusOK, PracticeResponse{
 		ID:            updatedPractice.ID,
 		Name:          updatedPractice.Name,
 		City:          updatedPractice.City,
 		Phone:         updatedPractice.Phone,
 		Email:         updatedPractice.Email,
-		PracticeCode:  *updatedPractice.PracticeCode,
+		PracticeCode:  updatedPractice.PracticeCode,
 		Logo:          *updatedPractice.Logo,
 		StreetAddress: *updatedPractice.StreetAddress,
 		Instagram:     *updatedPractice.Instagram,

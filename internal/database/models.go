@@ -41,7 +41,7 @@ type Practice struct {
 	Phone         string
 	Email         string
 	Owner         *uuid.UUID
-	PracticeCode  *string
+	PracticeCode  string
 	Logo          *string
 	StreetAddress *string
 	Facebook      *string

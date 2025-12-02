@@ -163,10 +163,10 @@ RETURNING id, created_at, modified_at, name, city, phone, email, owner, practice
 `
 
 type UpdatePracticeParams struct {
-	Name          string
-	City          string
-	Phone         string
-	Email         string
+	Name          *string
+	City          *string
+	Phone         *string
+	Email         *string
 	Owner         *uuid.UUID
 	PracticeCode  *string
 	Logo          *string

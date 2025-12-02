@@ -8,7 +8,7 @@ CREATE TABLE practices (
     phone TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
     owner uuid,
-    practice_code TEXT UNIQUE,
+    practice_code TEXT UNIQUE NOT NULL,
     logo TEXT,
     street_address TEXT,
     facebook TEXT,

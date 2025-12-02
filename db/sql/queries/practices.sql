@@ -25,10 +25,10 @@ RETURNING *;
 -- name: UpdatePractice :one
 UPDATE practices
 SET
-    name = COALESCE(sqlc.arg(name), name),
-    city = COALESCE(sqlc.arg(city), city),
-    phone = COALESCE(sqlc.arg(phone), phone),
-    email = COALESCE(sqlc.arg(email), email),
+    name = COALESCE(sqlc.narg(name), name),
+    city = COALESCE(sqlc.narg(city), city),
+    phone = COALESCE(sqlc.narg(phone), phone),
+    email = COALESCE(sqlc.narg(email), email),
     owner = COALESCE(sqlc.narg(owner), owner),
     practice_code = COALESCE(sqlc.narg(practice_code), practice_code),
     logo = COALESCE(sqlc.narg(logo), logo),
