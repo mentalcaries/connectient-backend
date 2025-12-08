@@ -75,6 +75,7 @@ type Appointment struct {
 	IsCancelled     bool
 	CreatedAt       time.Time
 	ModifiedAt      time.Time
+	Token           string
 }
 
 type Practice struct {

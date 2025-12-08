@@ -13,7 +13,7 @@ import (
 )
 
 const createAppointment = `-- name: CreateAppointment :one
-INSERT INTO appointments (id, created_at, first_name, last_name, email, mobile_phone, requested_date, is_emergency, description, appointment_type, is_scheduled, scheduled_date, created_by, scheduled_by, is_cancelled, requested_time, scheduled_time, practice_id, modified_at)
+INSERT INTO appointments (id, created_at, first_name, last_name, email, mobile_phone, requested_date, is_emergency, description, appointment_type, is_scheduled, scheduled_date, created_by, scheduled_by, is_cancelled, requested_time, scheduled_time, practice_id, token)
 VALUES (
     gen_random_uuid(), 
     NOW(),
@@ -33,9 +33,9 @@ VALUES (
     $14, 
     $15, 
     $16, 
-    NOW()
+    $17
 )
-RETURNING id, created_at, first_name, last_name, email, mobile_phone, requested_date, is_emergency, description, appointment_type, requested_time, practice_id, modified_at
+RETURNING id, created_at, first_name, last_name, email, mobile_phone, requested_date, is_emergency, description, appointment_type, requested_time, practice_id, modified_at, token
 `
 
 type CreateAppointmentParams struct {
@@ -55,6 +55,7 @@ type CreateAppointmentParams struct {
 	RequestedTime   string
 	ScheduledTime   *string
 	PracticeID      uuid.UUID
+	Token           string
 }
 
 type CreateAppointmentRow struct {
@@ -71,6 +72,7 @@ type CreateAppointmentRow struct {
 	RequestedTime   string
 	PracticeID      uuid.UUID
 	ModifiedAt      time.Time
+	Token           string
 }
 
 func (q *Queries) CreateAppointment(ctx context.Context, arg CreateAppointmentParams) (CreateAppointmentRow, error) {
@@ -91,6 +93,7 @@ func (q *Queries) CreateAppointment(ctx context.Context, arg CreateAppointmentPa
 		arg.RequestedTime,
 		arg.ScheduledTime,
 		arg.PracticeID,
+		arg.Token,
 	)
 	var i CreateAppointmentRow
 	err := row.Scan(
@@ -107,6 +110,7 @@ func (q *Queries) CreateAppointment(ctx context.Context, arg CreateAppointmentPa
 		&i.RequestedTime,
 		&i.PracticeID,
 		&i.ModifiedAt,
+		&i.Token,
 	)
 	return i, err
 }
@@ -124,7 +128,7 @@ func (q *Queries) DeleteAppointment(ctx context.Context, id uuid.UUID) (uuid.UUI
 }
 
 const getAppointmentById = `-- name: GetAppointmentById :one
-SELECT id, first_name, last_name, email, mobile_phone, requested_date, requested_time, is_emergency, description, appointment_type, is_scheduled, scheduled_date, scheduled_time, practice_id, created_by, scheduled_by, is_cancelled, created_at, modified_at FROM appointments WHERE id = $1
+SELECT id, first_name, last_name, email, mobile_phone, requested_date, requested_time, is_emergency, description, appointment_type, is_scheduled, scheduled_date, scheduled_time, practice_id, created_by, scheduled_by, is_cancelled, created_at, modified_at, token FROM appointments WHERE id = $1
 `
 
 func (q *Queries) GetAppointmentById(ctx context.Context, id uuid.UUID) (Appointment, error) {
@@ -150,13 +154,14 @@ func (q *Queries) GetAppointmentById(ctx context.Context, id uuid.UUID) (Appoint
 		&i.IsCancelled,
 		&i.CreatedAt,
 		&i.ModifiedAt,
+		&i.Token,
 	)
 	return i, err
 }
 
 const getAppointments = `-- name: GetAppointments :many
 
-SELECT id, first_name, last_name, email, mobile_phone, requested_date, requested_time, is_emergency, description, appointment_type, is_scheduled, scheduled_date, scheduled_time, practice_id, created_by, scheduled_by, is_cancelled, created_at, modified_at FROM appointments
+SELECT id, first_name, last_name, email, mobile_phone, requested_date, requested_time, is_emergency, description, appointment_type, is_scheduled, scheduled_date, scheduled_time, practice_id, created_by, scheduled_by, is_cancelled, created_at, modified_at, token FROM appointments
 `
 
 func (q *Queries) GetAppointments(ctx context.Context) ([]Appointment, error) {
@@ -188,6 +193,7 @@ func (q *Queries) GetAppointments(ctx context.Context) ([]Appointment, error) {
 			&i.IsCancelled,
 			&i.CreatedAt,
 			&i.ModifiedAt,
+			&i.Token,
 		); err != nil {
 			return nil, err
 		}
@@ -199,6 +205,66 @@ func (q *Queries) GetAppointments(ctx context.Context) ([]Appointment, error) {
 	return items, nil
 }
 
+const manageAppointmentByToken = `-- name: ManageAppointmentByToken :one
+
+UPDATE appointments
+SET requested_date = COALESCE($1, requested_date),
+    requested_time = COALESCE($2, requested_time),
+    is_cancelled = COALESCE($3, is_cancelled),
+    is_emergency = COALESCE($4), 
+    description = COALESCE($5), 
+    appointment_type = COALESCE($6), 
+    modified_at = NOW()
+WHERE token = $7
+RETURNING id, first_name, last_name, email, mobile_phone, requested_date, requested_time, is_emergency, description, appointment_type, is_scheduled, scheduled_date, scheduled_time, practice_id, created_by, scheduled_by, is_cancelled, created_at, modified_at, token
+`
+
+type ManageAppointmentByTokenParams struct {
+	RequestedDate   *time.Time
+	RequestedTime   *string
+	IsCancelled     *bool
+	IsEmergency     *bool
+	Description     *string
+	AppointmentType *string
+	Token           string
+}
+
+func (q *Queries) ManageAppointmentByToken(ctx context.Context, arg ManageAppointmentByTokenParams) (Appointment, error) {
+	row := q.db.QueryRow(ctx, manageAppointmentByToken,
+		arg.RequestedDate,
+		arg.RequestedTime,
+		arg.IsCancelled,
+		arg.IsEmergency,
+		arg.Description,
+		arg.AppointmentType,
+		arg.Token,
+	)
+	var i Appointment
+	err := row.Scan(
+		&i.ID,
+		&i.FirstName,
+		&i.LastName,
+		&i.Email,
+		&i.MobilePhone,
+		&i.RequestedDate,
+		&i.RequestedTime,
+		&i.IsEmergency,
+		&i.Description,
+		&i.AppointmentType,
+		&i.IsScheduled,
+		&i.ScheduledDate,
+		&i.ScheduledTime,
+		&i.PracticeID,
+		&i.CreatedBy,
+		&i.ScheduledBy,
+		&i.IsCancelled,
+		&i.CreatedAt,
+		&i.ModifiedAt,
+		&i.Token,
+	)
+	return i, err
+}
+
 const updateAppointment = `-- name: UpdateAppointment :one
 UPDATE appointments
 SET scheduled_date = COALESCE($1, scheduled_date),
@@ -207,7 +273,7 @@ SET scheduled_date = COALESCE($1, scheduled_date),
     is_cancelled = COALESCE($4, is_cancelled),
     modified_at = NOW()
 WHERE id = $5
-RETURNING id, first_name, last_name, email, mobile_phone, requested_date, requested_time, is_emergency, description, appointment_type, is_scheduled, scheduled_date, scheduled_time, practice_id, created_by, scheduled_by, is_cancelled, created_at, modified_at
+RETURNING id, first_name, last_name, email, mobile_phone, requested_date, requested_time, is_emergency, description, appointment_type, is_scheduled, scheduled_date, scheduled_time, practice_id, created_by, scheduled_by, is_cancelled, created_at, modified_at, token
 `
 
 type UpdateAppointmentParams struct {
@@ -247,6 +313,7 @@ func (q *Queries) UpdateAppointment(ctx context.Context, arg UpdateAppointmentPa
 		&i.IsCancelled,
 		&i.CreatedAt,
 		&i.ModifiedAt,
+		&i.Token,
 	)
 	return i, err
 }

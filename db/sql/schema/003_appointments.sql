@@ -17,9 +17,15 @@ CREATE TABLE appointments (
     created_by UUID,
     scheduled_by UUID,
     is_cancelled BOOLEAN DEFAULT FALSE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    modified_at TIMESTAMP WITH TIME ZONE NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    modified_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    token TEXT NOT NULL UNIQUE,
+    CONSTRAINT Appointments_practice_id_fkey FOREIGN KEY (practice_id) REFERENCES practices(id)
+
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS appt_token
+ON appointments(token);
 
 -- +goose Down
 DROP TABLE appointments;

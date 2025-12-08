@@ -3,7 +3,7 @@
 SELECT * FROM appointments;
 
 -- name: CreateAppointment :one
-INSERT INTO appointments (id, created_at, first_name, last_name, email, mobile_phone, requested_date, is_emergency, description, appointment_type, is_scheduled, scheduled_date, created_by, scheduled_by, is_cancelled, requested_time, scheduled_time, practice_id, modified_at)
+INSERT INTO appointments (id, created_at, first_name, last_name, email, mobile_phone, requested_date, is_emergency, description, appointment_type, is_scheduled, scheduled_date, created_by, scheduled_by, is_cancelled, requested_time, scheduled_time, practice_id, token)
 VALUES (
     gen_random_uuid(), 
     NOW(),
@@ -23,9 +23,9 @@ VALUES (
     sqlc.arg(requested_time), 
     sqlc.arg(scheduled_time), 
     sqlc.arg(practice_id), 
-    NOW()
+    sqlc.arg(token)
 )
-RETURNING id, created_at, first_name, last_name, email, mobile_phone, requested_date, is_emergency, description, appointment_type, requested_time, practice_id, modified_at;
+RETURNING id, created_at, first_name, last_name, email, mobile_phone, requested_date, is_emergency, description, appointment_type, requested_time, practice_id, modified_at, token;
 
 -- name: GetAppointmentById :one
 SELECT * FROM appointments WHERE id = $1;
@@ -38,6 +38,19 @@ SET scheduled_date = COALESCE(sqlc.narg(scheduled_date), scheduled_date),
     is_cancelled = COALESCE(sqlc.narg(is_cancelled), is_cancelled),
     modified_at = NOW()
 WHERE id = sqlc.arg(id)
+RETURNING *;
+
+-- name: ManageAppointmentByToken :one
+
+UPDATE appointments
+SET requested_date = COALESCE(sqlc.narg(requested_date), requested_date),
+    requested_time = COALESCE(sqlc.narg(requested_time), requested_time),
+    is_cancelled = COALESCE(sqlc.narg(is_cancelled), is_cancelled),
+    is_emergency = COALESCE(sqlc.narg(is_emergency)), 
+    description = COALESCE(sqlc.narg(description)), 
+    appointment_type = COALESCE(sqlc.narg(appointment_type)), 
+    modified_at = NOW()
+WHERE token = sqlc.arg(token)
 RETURNING *;
 
 -- name: DeleteAppointment :one

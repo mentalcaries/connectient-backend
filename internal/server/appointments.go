@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/mentalcaries/connectient-backend/internal/auth"
 	db "github.com/mentalcaries/connectient-backend/internal/database"
 )
 
@@ -31,6 +32,7 @@ type Appointment struct {
 	IsCancelled     bool       `json:"is_cancelled"`
 	RequestedTime   string     `json:"requested_time"`
 	PracticeID      uuid.UUID  `json:"practice_id"`
+	Token           string     `json:"token"`
 }
 
 type NewAppointmentRequest struct {
@@ -83,6 +85,7 @@ func (s *Server) handlerAppointmentsGetAll(w http.ResponseWriter, r *http.Reques
 			RequestedTime:   dbAppt.RequestedTime,
 			ScheduledTime:   dbAppt.ScheduledTime,
 			PracticeID:      dbAppt.PracticeID,
+			Token:           dbAppt.Token,
 		})
 	}
 	respondWithJSON(w, http.StatusOK, appointments)
@@ -120,6 +123,7 @@ func (s *Server) handlerGetAppointmentById(w http.ResponseWriter, r *http.Reques
 		RequestedTime:   dbAppt.RequestedTime,
 		ScheduledTime:   dbAppt.ScheduledTime,
 		PracticeID:      dbAppt.PracticeID,
+		Token:           dbAppt.Token,
 	})
 }
 
@@ -133,6 +137,9 @@ func (s *Server) handlerAppointmentsCreate(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	apptToken := auth.MakeToken()
+	fmt.Println(apptToken)
+
 	appointment, err := s.DB.CreateAppointment(r.Context(), db.CreateAppointmentParams{
 		FirstName:       params.FirstName,
 		LastName:        params.LastName,
@@ -144,6 +151,7 @@ func (s *Server) handlerAppointmentsCreate(w http.ResponseWriter, r *http.Reques
 		Description:     params.Description,
 		IsEmergency:     params.IsEmergency,
 		PracticeID:      params.PracticeID,
+		Token:           apptToken,
 	})
 
 	if err != nil {
@@ -164,6 +172,7 @@ func (s *Server) handlerAppointmentsCreate(w http.ResponseWriter, r *http.Reques
 		Description:     *appointment.Description,
 		IsEmergency:     appointment.IsEmergency,
 		PracticeID:      appointment.PracticeID,
+		Token:           appointment.Token,
 	})
 }
 
