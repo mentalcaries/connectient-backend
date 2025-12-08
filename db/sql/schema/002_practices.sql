@@ -1,6 +1,6 @@
 -- +goose Up
 CREATE TABLE practices (
-    id UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     modified_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     name TEXT NOT NULL,
