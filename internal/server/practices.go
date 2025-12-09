@@ -21,12 +21,13 @@ type PracticeResponse struct {
 	Phone         string     `json:"phone"`
 	Email         string     `json:"email"`
 	Owner         *uuid.UUID `json:"owner,omitempty"`
-	PracticeCode  string    `json:"practice_code"`
+	PracticeCode  string     `json:"practice_code"`
 	Logo          string     `json:"logo,omitempty"`
 	StreetAddress string     `json:"street_address"`
 	Instagram     string     `json:"instagram,omitempty"`
 	Facebook      string     `json:"facebook,omitempty"`
 	Website       string     `json:"website,omitempty"`
+	IsActive      bool       `json:"is_active"`
 }
 
 type PracticeRequest struct {
@@ -42,6 +43,7 @@ type PracticeRequest struct {
 	Instagram     *string    `json:"instagram,omitempty"`
 	Facebook      *string    `json:"facebook,omitempty"`
 	Website       *string    `json:"website,omitempty"`
+	IsActive      *bool      `json:"is_active"`
 }
 
 func newPracticeResponse(p db.Practice) PracticeResponse {
@@ -60,6 +62,7 @@ func newPracticeResponse(p db.Practice) PracticeResponse {
 		Instagram:     *p.Instagram,
 		Facebook:      *p.Facebook,
 		Website:       *p.Website,
+		IsActive:      p.IsActive,
 	}
 }
 
@@ -166,6 +169,7 @@ func (s *Server) handlerPracticeUpdate(w http.ResponseWriter, r *http.Request) {
 		Instagram:     params.Instagram,
 		Facebook:      params.Facebook,
 		Website:       params.Website,
+		IsActive:      params.IsActive,
 	})
 
 	if err != nil {
@@ -189,6 +193,7 @@ func (s *Server) handlerPracticeUpdate(w http.ResponseWriter, r *http.Request) {
 		Instagram:     *updatedPractice.Instagram,
 		Facebook:      *updatedPractice.Facebook,
 		Website:       *updatedPractice.Website,
+		IsActive:      updatedPractice.IsActive,
 	})
 
 }

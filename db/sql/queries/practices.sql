@@ -36,6 +36,7 @@ SET
     facebook = COALESCE(sqlc.narg(facebook), facebook),
     instagram = COALESCE(sqlc.narg(instagram), instagram),
     website = COALESCE(sqlc.narg(website), website),
+    is_active = COALESCE(sqlc.narg(is_active), is_active),
     modified_at = NOW()
 WHERE id = sqlc.arg(id)
 RETURNING *;

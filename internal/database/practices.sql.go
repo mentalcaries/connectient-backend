@@ -26,7 +26,7 @@ VALUES (
     $10,
     $11
 )
-RETURNING id, created_at, modified_at, name, city, phone, email, owner, practice_code, logo, street_address, facebook, instagram, website
+RETURNING id, created_at, modified_at, name, city, phone, email, owner, practice_code, logo, street_address, facebook, instagram, website, is_active
 `
 
 type CreatePracticeParams struct {
@@ -73,12 +73,13 @@ func (q *Queries) CreatePractice(ctx context.Context, arg CreatePracticeParams) 
 		&i.Facebook,
 		&i.Instagram,
 		&i.Website,
+		&i.IsActive,
 	)
 	return i, err
 }
 
 const getPractice = `-- name: GetPractice :one
-SELECT id, created_at, modified_at, name, city, phone, email, owner, practice_code, logo, street_address, facebook, instagram, website FROM practices
+SELECT id, created_at, modified_at, name, city, phone, email, owner, practice_code, logo, street_address, facebook, instagram, website, is_active FROM practices
 WHERE ID = $1
 `
 
@@ -100,12 +101,13 @@ func (q *Queries) GetPractice(ctx context.Context, id uuid.UUID) (Practice, erro
 		&i.Facebook,
 		&i.Instagram,
 		&i.Website,
+		&i.IsActive,
 	)
 	return i, err
 }
 
 const getPractices = `-- name: GetPractices :many
-SELECT id, created_at, modified_at, name, city, phone, email, owner, practice_code, logo, street_address, facebook, instagram, website FROM practices
+SELECT id, created_at, modified_at, name, city, phone, email, owner, practice_code, logo, street_address, facebook, instagram, website, is_active FROM practices
 `
 
 func (q *Queries) GetPractices(ctx context.Context) ([]Practice, error) {
@@ -132,6 +134,7 @@ func (q *Queries) GetPractices(ctx context.Context) ([]Practice, error) {
 			&i.Facebook,
 			&i.Instagram,
 			&i.Website,
+			&i.IsActive,
 		); err != nil {
 			return nil, err
 		}
@@ -157,9 +160,10 @@ SET
     facebook = COALESCE($9, facebook),
     instagram = COALESCE($10, instagram),
     website = COALESCE($11, website),
+    is_active = COALESCE($12, is_active),
     modified_at = NOW()
-WHERE id = $12
-RETURNING id, created_at, modified_at, name, city, phone, email, owner, practice_code, logo, street_address, facebook, instagram, website
+WHERE id = $13
+RETURNING id, created_at, modified_at, name, city, phone, email, owner, practice_code, logo, street_address, facebook, instagram, website, is_active
 `
 
 type UpdatePracticeParams struct {
@@ -174,6 +178,7 @@ type UpdatePracticeParams struct {
 	Facebook      *string
 	Instagram     *string
 	Website       *string
+	IsActive      *bool
 	ID            uuid.UUID
 }
 
@@ -190,6 +195,7 @@ func (q *Queries) UpdatePractice(ctx context.Context, arg UpdatePracticeParams) 
 		arg.Facebook,
 		arg.Instagram,
 		arg.Website,
+		arg.IsActive,
 		arg.ID,
 	)
 	var i Practice
@@ -208,6 +214,7 @@ func (q *Queries) UpdatePractice(ctx context.Context, arg UpdatePracticeParams) 
 		&i.Facebook,
 		&i.Instagram,
 		&i.Website,
+		&i.IsActive,
 	)
 	return i, err
 }

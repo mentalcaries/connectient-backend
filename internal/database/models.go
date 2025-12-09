@@ -93,6 +93,7 @@ type Practice struct {
 	Facebook      *string
 	Instagram     *string
 	Website       *string
+	IsActive      bool
 }
 
 type User struct {
