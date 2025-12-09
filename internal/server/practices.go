@@ -30,13 +30,24 @@ type PracticeResponse struct {
 	IsActive      bool       `json:"is_active"`
 }
 
-type PracticeRequest struct {
-	ID            *uuid.UUID `json:"id,omitempty"`
-	Name          string     `json:"name,omitempty"`
-	City          string     `json:"city,omitempty"`
-	Phone         string     `json:"phone,omitempty"`
-	Email         string     `json:"email,omitempty"`
-	Owner         *uuid.UUID `json:"owner,omitempty"`
+type CreatePracticeRequest struct {
+	Name          string     `json:"name"`
+	City          string     `json:"city"`
+	Phone         string     `json:"phone"`
+	Email         string     `json:"email"`
+	PracticeCode  *string    `json:"practice_code"`
+	Logo          *string    `json:"logo,omitempty"`
+	StreetAddress *string    `json:"street_address,omitempty"`
+	Instagram     *string    `json:"instagram,omitempty"`
+	Facebook      *string    `json:"facebook,omitempty"`
+	Website       *string    `json:"website,omitempty"`
+	IsActive      *bool      `json:"is_active"`
+}
+type UpdatePracticeRequest struct {
+	Name          *string    `json:"name,omitempty"`
+	City          *string    `json:"city,omitempty"`
+	Phone         *string    `json:"phone,omitempty"`
+	Email         *string    `json:"email,omitempty"`
 	PracticeCode  *string    `json:"practice_code,omitempty"`
 	Logo          *string    `json:"logo,omitempty"`
 	StreetAddress *string    `json:"street_address,omitempty"`
@@ -55,7 +66,6 @@ func newPracticeResponse(p db.Practice) PracticeResponse {
 		City:          p.City,
 		Phone:         p.Phone,
 		Email:         p.Email,
-		Owner:         p.Owner,
 		PracticeCode:  p.PracticeCode,
 		Logo:          *p.Logo,
 		StreetAddress: *p.StreetAddress,
@@ -82,13 +92,13 @@ func (s *Server) handlerPracticeGetAll(w http.ResponseWriter, r *http.Request) {
 			City:          practice.City,
 			Phone:         practice.Phone,
 			Email:         practice.Email,
-			Owner:         practice.Owner,
 			PracticeCode:  practice.PracticeCode,
 			Logo:          *practice.Logo,
 			StreetAddress: *practice.StreetAddress,
 			Instagram:     *practice.Instagram,
 			Facebook:      *practice.Facebook,
 			Website:       *practice.Website,
+			IsActive:      practice.IsActive,
 		})
 	}
 
@@ -98,7 +108,7 @@ func (s *Server) handlerPracticeGetAll(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handlerPracticeCreate(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 
-	params := PracticeRequest{}
+	params := CreatePracticeRequest{}
 
 	err := decoder.Decode(&params)
 	if err != nil {
@@ -149,7 +159,7 @@ func (s *Server) handlerPracticeUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	decoder := json.NewDecoder(r.Body)
-	params := PracticeRequest{}
+	params := UpdatePracticeRequest{}
 
 	err = decoder.Decode(&params)
 	if err != nil {
@@ -159,10 +169,10 @@ func (s *Server) handlerPracticeUpdate(w http.ResponseWriter, r *http.Request) {
 
 	updatedPractice, err := s.DB.UpdatePractice(r.Context(), db.UpdatePracticeParams{
 		ID:            pracId,
-		Name:          &params.Name,
-		City:          &params.City,
-		Phone:         &params.Phone,
-		Email:         &params.Email,
+		Name:          params.Name,
+		City:          params.City,
+		Phone:         params.Phone,
+		Email:         params.Email,
 		PracticeCode:  params.PracticeCode,
 		Logo:          params.Logo,
 		StreetAddress: params.StreetAddress,

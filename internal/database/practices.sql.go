@@ -12,7 +12,7 @@ import (
 )
 
 const createPractice = `-- name: CreatePractice :one
-INSERT INTO practices (name, city, phone, email, owner, practice_code, logo, street_address, facebook, instagram, website)
+INSERT INTO practices (name, city, phone, email, practice_code, logo, street_address, facebook, instagram, website)
 VALUES (
     $1,
     $2,
@@ -23,10 +23,9 @@ VALUES (
     $7,
     $8,
     $9,
-    $10,
-    $11
+    $10
 )
-RETURNING id, created_at, modified_at, name, city, phone, email, owner, practice_code, logo, street_address, facebook, instagram, website, is_active
+RETURNING id, created_at, modified_at, name, city, phone, email, practice_code, logo, street_address, facebook, instagram, website, is_active
 `
 
 type CreatePracticeParams struct {
@@ -34,7 +33,6 @@ type CreatePracticeParams struct {
 	City          string
 	Phone         string
 	Email         string
-	Owner         *uuid.UUID
 	PracticeCode  *string
 	Logo          *string
 	StreetAddress *string
@@ -49,7 +47,6 @@ func (q *Queries) CreatePractice(ctx context.Context, arg CreatePracticeParams) 
 		arg.City,
 		arg.Phone,
 		arg.Email,
-		arg.Owner,
 		arg.PracticeCode,
 		arg.Logo,
 		arg.StreetAddress,
@@ -66,7 +63,6 @@ func (q *Queries) CreatePractice(ctx context.Context, arg CreatePracticeParams) 
 		&i.City,
 		&i.Phone,
 		&i.Email,
-		&i.Owner,
 		&i.PracticeCode,
 		&i.Logo,
 		&i.StreetAddress,
@@ -79,7 +75,7 @@ func (q *Queries) CreatePractice(ctx context.Context, arg CreatePracticeParams) 
 }
 
 const getPractice = `-- name: GetPractice :one
-SELECT id, created_at, modified_at, name, city, phone, email, owner, practice_code, logo, street_address, facebook, instagram, website, is_active FROM practices
+SELECT id, created_at, modified_at, name, city, phone, email, practice_code, logo, street_address, facebook, instagram, website, is_active FROM practices
 WHERE ID = $1
 `
 
@@ -94,7 +90,6 @@ func (q *Queries) GetPractice(ctx context.Context, id uuid.UUID) (Practice, erro
 		&i.City,
 		&i.Phone,
 		&i.Email,
-		&i.Owner,
 		&i.PracticeCode,
 		&i.Logo,
 		&i.StreetAddress,
@@ -107,7 +102,7 @@ func (q *Queries) GetPractice(ctx context.Context, id uuid.UUID) (Practice, erro
 }
 
 const getPractices = `-- name: GetPractices :many
-SELECT id, created_at, modified_at, name, city, phone, email, owner, practice_code, logo, street_address, facebook, instagram, website, is_active FROM practices
+SELECT id, created_at, modified_at, name, city, phone, email, practice_code, logo, street_address, facebook, instagram, website, is_active FROM practices
 `
 
 func (q *Queries) GetPractices(ctx context.Context) ([]Practice, error) {
@@ -127,7 +122,6 @@ func (q *Queries) GetPractices(ctx context.Context) ([]Practice, error) {
 			&i.City,
 			&i.Phone,
 			&i.Email,
-			&i.Owner,
 			&i.PracticeCode,
 			&i.Logo,
 			&i.StreetAddress,
@@ -153,17 +147,16 @@ SET
     city = COALESCE($2, city),
     phone = COALESCE($3, phone),
     email = COALESCE($4, email),
-    owner = COALESCE($5, owner),
-    practice_code = COALESCE($6, practice_code),
-    logo = COALESCE($7, logo),
-    street_address = COALESCE($8, street_address),
-    facebook = COALESCE($9, facebook),
-    instagram = COALESCE($10, instagram),
-    website = COALESCE($11, website),
-    is_active = COALESCE($12, is_active),
+    practice_code = COALESCE($5, practice_code),
+    logo = COALESCE($6, logo),
+    street_address = COALESCE($7, street_address),
+    facebook = COALESCE($8, facebook),
+    instagram = COALESCE($9, instagram),
+    website = COALESCE($10, website),
+    is_active = COALESCE($11, is_active),
     modified_at = NOW()
-WHERE id = $13
-RETURNING id, created_at, modified_at, name, city, phone, email, owner, practice_code, logo, street_address, facebook, instagram, website, is_active
+WHERE id = $12
+RETURNING id, created_at, modified_at, name, city, phone, email, practice_code, logo, street_address, facebook, instagram, website, is_active
 `
 
 type UpdatePracticeParams struct {
@@ -171,7 +164,6 @@ type UpdatePracticeParams struct {
 	City          *string
 	Phone         *string
 	Email         *string
-	Owner         *uuid.UUID
 	PracticeCode  *string
 	Logo          *string
 	StreetAddress *string
@@ -188,7 +180,6 @@ func (q *Queries) UpdatePractice(ctx context.Context, arg UpdatePracticeParams) 
 		arg.City,
 		arg.Phone,
 		arg.Email,
-		arg.Owner,
 		arg.PracticeCode,
 		arg.Logo,
 		arg.StreetAddress,
@@ -207,7 +198,6 @@ func (q *Queries) UpdatePractice(ctx context.Context, arg UpdatePracticeParams) 
 		&i.City,
 		&i.Phone,
 		&i.Email,
-		&i.Owner,
 		&i.PracticeCode,
 		&i.Logo,
 		&i.StreetAddress,

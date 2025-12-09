@@ -86,7 +86,6 @@ type Practice struct {
 	City          string
 	Phone         string
 	Email         string
-	Owner         *uuid.UUID
 	PracticeCode  string
 	Logo          *string
 	StreetAddress *string

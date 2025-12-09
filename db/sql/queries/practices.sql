@@ -6,13 +6,12 @@ SELECT * FROM practices
 WHERE ID = sqlc.arg(id);
 
 -- name: CreatePractice :one
-INSERT INTO practices (name, city, phone, email, owner, practice_code, logo, street_address, facebook, instagram, website)
+INSERT INTO practices (name, city, phone, email, practice_code, logo, street_address, facebook, instagram, website)
 VALUES (
     sqlc.arg(name),
     sqlc.arg(city),
     sqlc.arg(phone),
     sqlc.arg(email),
-    sqlc.narg(owner),
     sqlc.narg(practice_code),
     sqlc.narg(logo),
     sqlc.narg(street_address),
@@ -29,7 +28,6 @@ SET
     city = COALESCE(sqlc.narg(city), city),
     phone = COALESCE(sqlc.narg(phone), phone),
     email = COALESCE(sqlc.narg(email), email),
-    owner = COALESCE(sqlc.narg(owner), owner),
     practice_code = COALESCE(sqlc.narg(practice_code), practice_code),
     logo = COALESCE(sqlc.narg(logo), logo),
     street_address = COALESCE(sqlc.narg(street_address), street_address),

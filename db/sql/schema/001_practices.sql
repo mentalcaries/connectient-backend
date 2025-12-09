@@ -7,7 +7,6 @@ CREATE TABLE practices (
     city TEXT NOT NULL,
     phone TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
-    owner uuid,
     practice_code TEXT UNIQUE NOT NULL,
     logo TEXT,
     street_address TEXT,
