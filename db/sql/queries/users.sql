@@ -14,6 +14,9 @@ INSERT INTO users (
 )
 RETURNING *; 
 
+-- name: GetAllUsers :many
+SELECT * FROM users;
+
 -- name: GetUser :one
 
 SELECT * from users WHERE ID = sqlc.arg(id);
@@ -31,3 +34,9 @@ SET
     avatar_url = COALESCE(sqlc.narg(avatar_url), avatar_url)
 WHERE id = sqlc.arg(id)
 RETURNING *; 
+
+-- name: DeleteUser :one
+UPDATE users
+SET deleted_at = NOW()
+WHERE id = sqlc.arg(id)
+RETURNING *;

@@ -107,4 +107,5 @@ type User struct {
 	Role        UserRole
 	IsActive    bool
 	AvatarUrl   string
+	DeletedAt   *time.Time
 }

@@ -25,7 +25,7 @@ INSERT INTO users (
     $4,
     $5
 )
-RETURNING id, created_at, modified_at, first_name, last_name, mobile_phone, email, practice_id, role, is_active, avatar_url
+RETURNING id, created_at, modified_at, first_name, last_name, mobile_phone, email, practice_id, role, is_active, avatar_url, deleted_at
 `
 
 type CreateUserParams struct {
@@ -57,13 +57,78 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Role,
 		&i.IsActive,
 		&i.AvatarUrl,
+		&i.DeletedAt,
 	)
 	return i, err
 }
 
+const deleteUser = `-- name: DeleteUser :one
+UPDATE users
+SET deleted_at = NOW()
+WHERE id = $1
+RETURNING id, created_at, modified_at, first_name, last_name, mobile_phone, email, practice_id, role, is_active, avatar_url, deleted_at
+`
+
+func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) (User, error) {
+	row := q.db.QueryRow(ctx, deleteUser, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.ModifiedAt,
+		&i.FirstName,
+		&i.LastName,
+		&i.MobilePhone,
+		&i.Email,
+		&i.PracticeID,
+		&i.Role,
+		&i.IsActive,
+		&i.AvatarUrl,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const getAllUsers = `-- name: GetAllUsers :many
+SELECT id, created_at, modified_at, first_name, last_name, mobile_phone, email, practice_id, role, is_active, avatar_url, deleted_at FROM users
+`
+
+func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
+	rows, err := q.db.Query(ctx, getAllUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.ModifiedAt,
+			&i.FirstName,
+			&i.LastName,
+			&i.MobilePhone,
+			&i.Email,
+			&i.PracticeID,
+			&i.Role,
+			&i.IsActive,
+			&i.AvatarUrl,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUser = `-- name: GetUser :one
 
-SELECT id, created_at, modified_at, first_name, last_name, mobile_phone, email, practice_id, role, is_active, avatar_url from users WHERE ID = $1
+SELECT id, created_at, modified_at, first_name, last_name, mobile_phone, email, practice_id, role, is_active, avatar_url, deleted_at from users WHERE ID = $1
 `
 
 func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
@@ -81,6 +146,7 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.Role,
 		&i.IsActive,
 		&i.AvatarUrl,
+		&i.DeletedAt,
 	)
 	return i, err
 }
@@ -97,7 +163,7 @@ SET
     is_active = COALESCE($6, is_active),
     avatar_url = COALESCE($7, avatar_url)
 WHERE id = $8
-RETURNING id, created_at, modified_at, first_name, last_name, mobile_phone, email, practice_id, role, is_active, avatar_url
+RETURNING id, created_at, modified_at, first_name, last_name, mobile_phone, email, practice_id, role, is_active, avatar_url, deleted_at
 `
 
 type UpdateUserParams struct {
@@ -135,6 +201,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.Role,
 		&i.IsActive,
 		&i.AvatarUrl,
+		&i.DeletedAt,
 	)
 	return i, err
 }

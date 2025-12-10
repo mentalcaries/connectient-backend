@@ -19,7 +19,9 @@ func NewRouter(s *Server) http.Handler {
 
 	mux.HandleFunc("POST /users", s.handlerCreateUser)
 	mux.HandleFunc("PATCH /users/{id}", s.handlerUpdateUser)
+	mux.HandleFunc("GET /users/", s.handlerGetAllUsers)
 	mux.HandleFunc("GET /users/{id}", s.handleGetUser)
+	mux.HandleFunc("DELETE /users/{id}", s.handlerDeleteUser)
 
 	mux.HandleFunc("GET /appointments", s.handlerAppointmentsGetAll)
 	mux.HandleFunc("GET /appointments/{id}", s.handlerGetAppointmentById)

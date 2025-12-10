@@ -31,17 +31,34 @@ type UpdateUserRequest struct {
 }
 
 type UserResponse struct {
-	ID          uuid.UUID `json:"id"`
-	CreatedAt   time.Time `json:"created_at"`
-	ModifiedAt  time.Time `json:"modified_at"`
-	FirstName   string    `json:"first_name"`
-	LastName    string    `json:"last_name"`
-	MobilePhone string    `json:"mobile_phone"`
-	Email       string    `json:"email"`
-	PracticeID  uuid.UUID `json:"practice_id"`
-	Role        string    `json:"role"`
-	IsActive    bool      `json:"is_active"`
-	AvatarUrl   string    `json:"avatar_url,omitempty"`
+	ID          uuid.UUID  `json:"id"`
+	CreatedAt   time.Time  `json:"created_at"`
+	ModifiedAt  time.Time  `json:"modified_at"`
+	FirstName   string     `json:"first_name"`
+	LastName    string     `json:"last_name"`
+	MobilePhone string     `json:"mobile_phone"`
+	Email       string     `json:"email"`
+	PracticeID  uuid.UUID  `json:"practice_id"`
+	Role        string     `json:"role"`
+	IsActive    bool       `json:"is_active"`
+	AvatarUrl   string     `json:"avatar_url,omitempty"`
+	DeletedAt   *time.Time `json:"deleted_at,omitempty"`
+}
+
+func userResponse(u db.User) UserResponse {
+	return UserResponse{
+		ID:          u.ID,
+		CreatedAt:   u.CreatedAt,
+		FirstName:   u.FirstName,
+		LastName:    u.LastName,
+		MobilePhone: u.MobilePhone,
+		Email:       u.Email,
+		PracticeID:  u.PracticeID,
+		Role:        string(u.Role),
+		IsActive:    u.IsActive,
+		AvatarUrl:   u.AvatarUrl,
+		DeletedAt:   u.DeletedAt,
+	}
 }
 
 func (s *Server) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
@@ -80,18 +97,22 @@ func (s *Server) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, UserResponse{
-		ID:          newUser.ID,
-		CreatedAt:   newUser.CreatedAt,
-		FirstName:   newUser.FirstName,
-		LastName:    newUser.LastName,
-		MobilePhone: newUser.MobilePhone,
-		Email:       newUser.Email,
-		PracticeID:  newUser.PracticeID,
-		Role:        string(newUser.Role),
-		IsActive:    newUser.IsActive,
-		AvatarUrl:   newUser.AvatarUrl,
-	})
+	respondWithJSON(w, http.StatusCreated, userResponse(newUser))
+}
+
+func (s *Server) handlerGetAllUsers(w http.ResponseWriter, r *http.Request) {
+	usersDb, err := s.DB.GetAllUsers(r.Context())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Unable to fetch users", err)
+		return
+	}
+
+	allUsers := []UserResponse{}
+	for _, user := range usersDb {
+		allUsers = append(allUsers, userResponse(user))
+	}
+
+	respondWithJSON(w, http.StatusOK, allUsers)
 }
 
 func (s *Server) handleGetUser(w http.ResponseWriter, r *http.Request) {
@@ -107,19 +128,7 @@ func (s *Server) handleGetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, UserResponse{
-		ID:          user.ID,
-		CreatedAt:   user.CreatedAt,
-		ModifiedAt:  user.ModifiedAt,
-		FirstName:   user.FirstName,
-		LastName:    user.LastName,
-		MobilePhone: user.MobilePhone,
-		Email:       user.Email,
-		PracticeID:  user.PracticeID,
-		Role:        string(user.Role),
-		IsActive:    user.IsActive,
-		AvatarUrl:   user.AvatarUrl,
-	})
+	respondWithJSON(w, http.StatusOK, userResponse(user))
 
 }
 
@@ -137,7 +146,6 @@ func (s *Server) handlerUpdateUser(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusBadRequest, "Could not decode request", err)
 		return
 	}
-
 
 	updateParams := db.UpdateUserParams{
 		FirstName:   req.FirstName,
@@ -172,17 +180,23 @@ func (s *Server) handlerUpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, UserResponse{
-		ID:          updatedUser.ID,
-		CreatedAt:   updatedUser.CreatedAt,
-		ModifiedAt:  updatedUser.ModifiedAt,
-		FirstName:   updatedUser.FirstName,
-		LastName:    updatedUser.LastName,
-		MobilePhone: updatedUser.MobilePhone,
-		Email:       updatedUser.Email,
-		PracticeID:  updatedUser.PracticeID,
-		Role:        string(updatedUser.Role),
-		IsActive:    updatedUser.IsActive,
-		AvatarUrl:   updatedUser.AvatarUrl,
-	})
+	respondWithJSON(w, http.StatusOK, userResponse(updatedUser))
+}
+
+
+func (s *Server) handlerDeleteUser(w http.ResponseWriter, r *http.Request) {
+	userId, err := parseId(r, "id")
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Missing or invalid ID", err)
+		return
+	}
+
+	deletedUser, err := s.DB.DeleteUser(r.Context(), userId)
+
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Could not update user", err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, userResponse(deletedUser))
 }
